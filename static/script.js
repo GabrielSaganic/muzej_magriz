@@ -85,6 +85,15 @@ async function fetchImages(galleryCode, targetImgId = null) {
         feedContainer.innerHTML = ''; 
         renderImages();
         
+        // If we are on the main page, pick a random image from mainGalleryImages for the background
+        if (galleryCode === 'main') {
+            const mainImages = imagesData.filter(item => item.type === 'image');
+            if (mainImages.length > 0) {
+                const randomImg = mainImages[Math.floor(Math.random() * mainImages.length)];
+                mainFeed.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('${randomImg.url}')`;
+            }
+        }
+        
         if (galleryCode !== 'main') window.scrollTo(0, 0);
         
         if (targetImgId) {
