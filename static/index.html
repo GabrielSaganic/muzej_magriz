@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muzej Magriž</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav id="sidebar">
+        <div class="sidebar-top">
+            <div class="sidebar-header">
+                <h3 id="nav-header">Navigacija</h3>
+            </div>
+            <ul id="nav-list">
+                <li><a href="#hero" id="link-home" onclick="goHome(event)">Početna</a></li>
+                <li class="nav-divider"></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="content-area">
+        <div id="main-feed">
+            <section id="hero">
+                <div class="hero-overlay">
+                    <h2 id="hero-title">Zavičajna udruga Magriž Martinščića</h2>
+                    <p id="hero-description">Promicanje vrijednosti i održivi razvoj Martinšćice i Cresa.</p>
+                    <div class="scroll-indicator" onclick="document.getElementById('main-feed').scrollIntoView({behavior:'smooth'})">
+                        <span>Vidi više</span>
+                        <div class="arrow-down"></div>
+                    </div>
+                </div>
+            </section>
+
+            <div id="gallery-back-nav" style="display: none;">
+                <button id="gallery-back-btn" onclick="goHome(event)" class="back-nav-btn"></button>
+            </div>
+
+            <main id="feed-container">
+            </main>
+        </div>
+
+        <section id="detail-view" style="display: none;">
+            <div class="detail-header-fixed">
+                <button id="back-button" onclick="closeDetail()"></button>
+            </div>
+            <div class="detail-scroll-container">
+                <div class="detail-text-box">
+                    <div id="detail-desc" class="detail-description"></div>
+                </div>
+            </div>
+        </section>
+
+        <div id="image-modal" class="modal">
+            <span class="modal-close" onclick="closeModal()"></span>
+            <div class="modal-wrapper">
+                <img id="modal-img" src="" alt="">
+                <div id="modal-desc" class="modal-text"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lang-selector">
+        <button onclick="setLanguage('hr')">🇭🇷 HR</button>
+        <button onclick="setLanguage('en')">🇬🇧 EN</button>
+        <button onclick="setLanguage('it')">🇮🇹 IT</button>
+        <button onclick="setLanguage('de')">🇩🇪 DE</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

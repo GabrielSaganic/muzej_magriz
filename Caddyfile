@@ -1,0 +1,7 @@
+{
+    email gabriel.saganic@gmail.com
+}
+
+:80 {
+    reverse_proxy app:8080
+}
