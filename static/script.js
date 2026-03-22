@@ -147,7 +147,8 @@ function setLanguage(lang) {
     // Update existing cards
     document.querySelectorAll('.image-card').forEach(card => {
         const id = parseInt(card.dataset.id);
-        const item = imagesData.find(i => i.id === id);
+        const type = card.dataset.type;
+        const item = imagesData.find(i => i.id === id && i.type === type);
         if (item) card.querySelector('.image-desc').textContent = getDescription(item, currentLang, false);
     });
 
@@ -177,6 +178,12 @@ function updateUIText() {
     const navHeader = document.getElementById('nav-header');
     if (navHeader) navHeader.textContent = t.navHeader;
     
+    // Update scroll more text
+    const scrollMoreTextElement = document.getElementById('scroll-more-text');
+    if (scrollMoreTextElement) {
+        scrollMoreTextElement.textContent = t.scrollMore;
+    }
+    
     // Back buttons are icon-only now, so no text update needed
 }
 
@@ -192,6 +199,7 @@ function renderImages() {
         const card = document.createElement('div');
         card.className = 'image-card' + (item.type === 'video' ? ' video-card' : '');
         card.id = cardId;
+        card.dataset.type = item.type;
         card.dataset.id = item.id;
 
         const mediaWrapper = document.createElement('div');
