@@ -160,7 +160,7 @@ body {
 }
 
 #main-feed.is-gallery {
-    background: #000 !important;
+    /* Background will be set via JS from gallery images */
 }
 
 /* HERO SECTION */
@@ -255,7 +255,7 @@ body {
 /* FEED & GRID */
 #feed-container {
     width: 100%;
-    background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.9) 20vh, #000 100%);
+    background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 100%);
     padding: 10vh 0 5rem 0;
     display: flex;
     flex-direction: column;

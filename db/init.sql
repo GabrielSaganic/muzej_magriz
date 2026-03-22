@@ -1,5 +1,6 @@
 -- db/init.sql
 
+DROP TABLE IF EXISTS videa;
 DROP TABLE IF EXISTS linkovi;
 DROP TABLE IF EXISTS slike;
 

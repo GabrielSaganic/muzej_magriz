@@ -10,6 +10,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	_ "github.com/lib/pq"
 )
 
@@ -41,6 +43,7 @@ type MediaItem struct {
 }
 
 var db *sql.DB
+var cld *cloudinary.Cloudinary
 
 func main() {
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
@@ -63,7 +66,17 @@ func main() {
 	}
 	defer db.Close()
 
+	// Initialize Cloudinary
+	cldURL := os.Getenv("CLOUDINARY_URL")
+	if cldURL != "" {
+		cld, err = cloudinary.NewFromURL(cldURL)
+		if err != nil {
+			log.Printf("Warning: Cloudinary initialization failed: %v", err)
+		}
+	}
+
 	http.HandleFunc("/api/images", handleGetImages) // Keeping name for compatibility
+	http.HandleFunc("/api/upload", handleUpload)    // Sample upload endpoint
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 
 	port := os.Getenv("PORT")
@@ -142,4 +155,39 @@ func handleGetImages(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(items)
+}
+
+func handleUpload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if cld == nil {
+		http.Error(w, "Cloudinary not configured", http.StatusInternalServerError)
+		return
+	}
+
+	// Example: upload from a form-data file
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Failed to get file from request", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	resp, err := cld.Upload.Upload(r.Context(), file, uploader.UploadParams{
+		Folder: "muzej_magriz",
+	})
+	if err != nil {
+		http.Error(w, "Failed to upload to Cloudinary: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Here you would typically save resp.SecureURL to your database
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"url":       resp.SecureURL,
+		"public_id": resp.PublicID,
+	})
 }
