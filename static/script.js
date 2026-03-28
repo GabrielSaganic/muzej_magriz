@@ -135,7 +135,12 @@ function populateSidebar() {
 
 function scrollToImage(id) {
     const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+    if (el) {
+        // Offset to account for fixed header if gallery mode
+        const yOffset = currentGallery !== 'main' ? -100 : 0;
+        const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+    }
 }
 
 function setLanguage(lang) {
