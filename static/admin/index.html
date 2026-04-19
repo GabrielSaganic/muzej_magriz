@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muzej Magriž - CMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50:'#faf5fb', 100:'#f4eaf6', 200:'#e9d5ee', 300:'#d6b3df', 400:'#be86cb', 500:'#995EA1', 600:'#874e8e', 700:'#713f75', 800:'#5e3661', 900:'#4f2f52' },
+                        accent: { 500:'#66A15E', 600:'#578c51' }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        .lang-tab.active { border-color: #995EA1; color: #995EA1; font-weight: 600; }
+        .nav-link.active { background: rgba(255,255,255,0.15); }
+        .modal-backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .upload-zone.dragover { border-color: #995EA1; background: #faf5fb; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+
+<!-- Login Screen -->
+<div id="login-screen" class="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary-500 to-primary-800">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-800">Muzej Magriž</h1>
+            <p class="text-gray-500 text-sm mt-1">Content Management System</p>
+        </div>
+        <form id="login-form" onsubmit="doLogin(event)">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="login-email" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition">
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Lozinka</label>
+                <input type="password" id="login-password" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition">
+            </div>
+            <button type="submit" id="login-btn" class="w-full bg-primary-500 text-white py-3 rounded-xl hover:bg-primary-600 transition font-medium">Prijava</button>
+            <p id="login-error" class="text-red-500 text-sm mt-3 text-center hidden"></p>
+        </form>
+    </div>
+</div>
+
+<!-- CMS Layout -->
+<div id="cms-layout" class="flex min-h-screen hidden">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-primary-800 text-white flex flex-col fixed h-full z-30">
+        <div class="p-6 border-b border-primary-700">
+            <h1 class="text-lg font-bold">Muzej Magriž</h1>
+            <p class="text-primary-300 text-xs mt-0.5">CMS</p>
+        </div>
+        <nav class="flex-1 py-4">
+            <a href="#" onclick="showSection('dashboard',this)" class="nav-link active flex items-center gap-3 px-6 py-3 text-sm text-white/80 hover:text-white hover:bg-white/10 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                Dashboard
+            </a>
+            <a href="#" onclick="showSection('images',this)" class="nav-link flex items-center gap-3 px-6 py-3 text-sm text-white/80 hover:text-white hover:bg-white/10 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Slike
+            </a>
+            <a href="#" onclick="showSection('videos',this)" class="nav-link flex items-center gap-3 px-6 py-3 text-sm text-white/80 hover:text-white hover:bg-white/10 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                Videa
+            </a>
+        </nav>
+        <div class="p-4 border-t border-primary-700">
+            <p id="user-email" class="text-xs text-primary-300 mb-2 truncate"></p>
+            <button onclick="doLogout()" class="w-full bg-primary-900/50 text-white py-2 rounded-lg hover:bg-primary-900 transition text-sm">Odjava</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 min-h-screen">
+        <!-- Dashboard -->
+        <div id="section-dashboard" class="p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-2xl shadow-sm card-hover transition">
+                    <div class="text-3xl font-bold text-primary-500" id="stat-images">0</div>
+                    <div class="text-gray-500 text-sm mt-1">Slike</div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm card-hover transition">
+                    <div class="text-3xl font-bold text-accent-500" id="stat-videos">0</div>
+                    <div class="text-gray-500 text-sm mt-1">Videa</div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm card-hover transition">
+                    <div class="text-3xl font-bold text-blue-500" id="stat-galleries">0</div>
+                    <div class="text-gray-500 text-sm mt-1">Galerije</div>
+                </div>
+            </div>
+            <p class="text-gray-500 text-sm">Odaberite galeriju u sekciji Slike ili Videa pa dodajte novi sadržaj.</p>
+        </div>
+
+        <!-- Images Section -->
+        <div id="section-images" class="p-8 hidden">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Slike</h2>
+                <div class="flex gap-3">
+                    <select id="filter-gallery-images" class="px-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none" onchange="loadImages()">
+                        <option value="main">main</option>
+                    </select>
+                    <button onclick="openImageModal()" class="bg-primary-500 text-white px-5 py-2 rounded-xl hover:bg-primary-600 transition text-sm font-medium">+ Dodaj sliku</button>
+                </div>
+            </div>
+            <div id="images-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+            <div id="images-empty" class="hidden text-center py-16 text-gray-400">Nema slika u ovoj galeriji.</div>
+        </div>
+
+        <!-- Videos Section -->
+        <div id="section-videos" class="p-8 hidden">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Videa</h2>
+                <div class="flex gap-3">
+                    <select id="filter-gallery-videos" class="px-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none" onchange="loadVideos()">
+                        <option value="main">main</option>
+                    </select>
+                    <button onclick="openVideoModal()" class="bg-accent-500 text-white px-5 py-2 rounded-xl hover:bg-accent-600 transition text-sm font-medium">+ Dodaj video</button>
+                </div>
+            </div>
+            <div id="videos-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+            <div id="videos-empty" class="hidden text-center py-16 text-gray-400">Nema videa u ovoj galeriji.</div>
+        </div>
+    </main>
+</div>
+
+<!-- Image Modal -->
+<div id="image-modal" class="fixed inset-0 z-50 hidden flex items-start justify-center overflow-y-auto py-8">
+    <div class="modal-backdrop fixed inset-0" onclick="closeImageModal()"></div>
+    <div class="bg-white rounded-2xl w-full max-w-3xl shadow-2xl relative z-10 my-auto">
+        <div class="p-6 border-b flex justify-between items-center">
+            <h3 id="image-modal-title" class="text-lg font-bold text-gray-800">Nova slika</h3>
+            <button onclick="closeImageModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+        </div>
+        <form id="image-form" onsubmit="saveImage(event)" class="p-6">
+            <input type="hidden" id="img-edit-id">
+            <input type="hidden" id="img-current-url">
+
+            <!-- Upload -->
+            <div id="img-upload-section" class="mb-6">
+                <div id="img-upload-zone" class="upload-zone border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-primary-400 transition" onclick="document.getElementById('img-file').click()">
+                    <div id="img-preview" class="hidden mb-3"><img id="img-preview-img" class="max-h-40 mx-auto rounded-lg"></div>
+                    <div id="img-upload-text">
+                        <svg class="w-10 h-10 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <p class="text-gray-500 text-sm">Klikni za odabir slike</p>
+                    </div>
+                    <input type="file" id="img-file" accept="image/*" class="hidden" onchange="previewFile(this,'img')">
+                </div>
+            </div>
+
+            <!-- Gallery (hidden, set from filter) & Order -->
+            <input type="hidden" id="img-gallery" value="main">
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Redoslijed</label>
+                <input type="number" id="img-order" value="0" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none">
+            </div>
+
+            <!-- Language Tabs -->
+            <div class="mb-6">
+                <div class="flex border-b border-gray-200 mb-4">
+                    <button type="button" onclick="switchLangTab('img','hr')" class="lang-tab img-lang-tab active px-4 py-2.5 text-sm border-b-2 border-transparent -mb-px" data-lang="hr">HR</button>
+                    <button type="button" onclick="switchLangTab('img','en')" class="lang-tab img-lang-tab px-4 py-2.5 text-sm border-b-2 border-transparent -mb-px text-gray-500" data-lang="en">EN</button>
+                    <button type="button" onclick="switchLangTab('img','it')" class="lang-tab img-lang-tab px-4 py-2.5 text-sm border-b-2 border-transparent -mb-px text-gray-500" data-lang="it">IT</button>
+                    <button type="button" onclick="switchLangTab('img','de')" class="lang-tab img-lang-tab px-4 py-2.5 text-sm border-b-2 border-transparent -mb-px text-gray-500" data-lang="de">DE</button>
+                </div>
+                <div id="img-lang-hr" class="img-lang-content">
+                    <div class="mb-3"><label class="block text-sm font-medium text-gray-700 mb-1">Kratki opis (HR)</label><input type="text" id="img-desc-hr" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Dugi opis (HR) <span class="text-gray-400 font-normal">- HTML dozvoljen</span></label><textarea id="img-long-desc-hr" rows="4" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></textarea></div>
+                </div>
+                <div id="img-lang-en" class="img-lang-content hidden">
+                    <div class="mb-3"><label class="block text-sm font-medium text-gray-700 mb-1">Short description (EN)</label><input type="text" id="img-desc-en" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Long description (EN) <span class="text-gray-400 font-normal">- HTML allowed</span></label><textarea id="img-long-desc-en" rows="4" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></textarea></div>
+                </div>
+                <div id="img-lang-it" class="img-lang-content hidden">
+                    <div class="mb-3"><label class="block text-sm font-medium text-gray-700 mb-1">Descrizione breve (IT)</label><input type="text" id="img-desc-it" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Descrizione lunga (IT) <span class="text-gray-400 font-normal">- HTML consentito</span></label><textarea id="img-long-desc-it" rows="4" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></textarea></div>
+                </div>
+                <div id="img-lang-de" class="img-lang-content hidden">
+                    <div class="mb-3"><label class="block text-sm font-medium text-gray-700 mb-1">Kurzbeschreibung (DE)</label><input type="text" id="img-desc-de" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Langbeschreibung (DE) <span class="text-gray-400 font-normal">- HTML erlaubt</span></label><textarea id="img-long-desc-de" rows="4" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></textarea></div>
+                </div>
+            </div>
+
+            <!-- Links Section (edit only) -->
+            <div id="img-links-section" class="hidden mb-6 bg-gray-50 rounded-xl p-5">
+                <h4 class="font-bold text-gray-800 text-sm mb-3">Linkovi na galerije</h4>
+                <div id="img-links-list" class="space-y-2 mb-3"></div>
+                <div id="add-link-form" class="hidden border-t border-gray-200 pt-3 mt-3">
+                    <div class="grid grid-cols-2 gap-3 mb-2">
+                        <input type="text" id="link-target" placeholder="Ciljna galerija (kod)" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <input type="text" id="link-name-hr" placeholder="Naziv (HR)" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 mb-3">
+                        <input type="text" id="link-name-en" placeholder="Name (EN)" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <input type="text" id="link-name-it" placeholder="Nome (IT)" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <input type="text" id="link-name-de" placeholder="Name (DE)" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="saveLink()" class="bg-primary-500 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-primary-600 transition">Spremi link</button>
+                        <button type="button" onclick="document.getElementById('add-link-form').classList.add('hidden')" class="px-4 py-1.5 rounded-lg text-sm border hover:bg-gray-100 transition">Odustani</button>
+                    </div>
+                </div>
+                <button type="button" id="add-link-btn" onclick="document.getElementById('add-link-form').classList.remove('hidden');this.classList.add('hidden')" class="text-primary-500 text-sm font-medium hover:text-primary-700">+ Dodaj link</button>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeImageModal()" class="px-6 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-50 transition text-sm">Odustani</button>
+                <button type="submit" id="img-submit-btn" class="bg-primary-500 text-white px-6 py-2.5 rounded-xl hover:bg-primary-600 transition text-sm font-medium">Spremi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Video Modal -->
+<div id="video-modal" class="fixed inset-0 z-50 hidden flex items-start justify-center overflow-y-auto py-8">
+    <div class="modal-backdrop fixed inset-0" onclick="closeVideoModal()"></div>
+    <div class="bg-white rounded-2xl w-full max-w-3xl shadow-2xl relative z-10 my-auto">
+        <div class="p-6 border-b flex justify-between items-center">
+            <h3 id="video-modal-title" class="text-lg font-bold text-gray-800">Novi video</h3>
+            <button onclick="closeVideoModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+        </div>
+        <form id="video-form" onsubmit="saveVideo(event)" class="p-6">
+            <input type="hidden" id="vid-edit-id">
+
+            <!-- Video URL or Upload -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Video URL <span class="text-gray-400 font-normal">- ili uploadaj datoteku ispod</span></label>
+                <input type="text" id="vid-url" placeholder="https://..." class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none mb-3">
+                <div class="upload-zone border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-accent-500 transition" onclick="document.getElementById('vid-file').click()">
+                    <p id="vid-file-label" class="text-gray-500 text-sm">Klikni za upload video datoteke (opcionalno)</p>
+                    <input type="file" id="vid-file" accept="video/*" class="hidden" onchange="this.parentElement.querySelector('p').textContent='Odabrano: '+this.files[0].name">
+                </div>
+            </div>
+
+            <!-- Thumbnail -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Thumbnail URL <span class="text-gray-400 font-normal">- ili uploadaj</span></label>
+                <input type="text" id="vid-thumb-url" placeholder="https://..." class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none mb-3">
+                <div class="upload-zone border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-accent-500 transition" onclick="document.getElementById('vid-thumb-file').click()">
+                    <div id="vid-thumb-preview" class="hidden mb-2"><img id="vid-thumb-preview-img" class="max-h-32 mx-auto rounded-lg"></div>
+                    <p id="vid-thumb-label" class="text-gray-500 text-sm">Klikni za upload thumbnailа (opcionalno)</p>
+                    <input type="file" id="vid-thumb-file" accept="image/*" class="hidden" onchange="previewFile(this,'vid-thumb')">
+                </div>
+            </div>
+
+            <!-- Gallery (hidden, set from filter) & Order -->
+            <input type="hidden" id="vid-gallery" value="main">
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Redoslijed</label>
+                <input type="number" id="vid-order" value="0" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none">
+            </div>
+
+            <!-- Language Tabs -->
+            <div class="mb-6">
+                <div class="flex border-b border-gray-200 mb-4">
+                    <button type="button" onclick="switchLangTab('vid','hr')" class="lang-tab vid-lang-tab active px-4 py-2.5 text-sm border-b-2 border-transparent -mb-px" data-lang="hr">HR</button>
+                    <button type="button" onclick="switchLangTab('vid','en')" class="lang-tab vid-lang-tab px-4 py-2.5 text-sm border-b-2 border-transparent -mb-px text-gray-500" data-lang="en">EN</button>
+                    <button type="button" onclick="switchLangTab('vid','it')" class="lang-tab vid-lang-tab px-4 py-2.5 text-sm border-b-2 border-transparent -mb-px text-gray-500" data-lang="it">IT</button>
+                    <button type="button" onclick="switchLangTab('vid','de')" class="lang-tab vid-lang-tab px-4 py-2.5 text-sm border-b-2 border-transparent -mb-px text-gray-500" data-lang="de">DE</button>
+                </div>
+                <div id="vid-lang-hr" class="vid-lang-content">
+                    <div class="mb-3"><label class="block text-sm font-medium text-gray-700 mb-1">Kratki opis (HR)</label><input type="text" id="vid-desc-hr" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Dugi opis (HR)</label><textarea id="vid-long-desc-hr" rows="3" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></textarea></div>
+                </div>
+                <div id="vid-lang-en" class="vid-lang-content hidden">
+                    <div class="mb-3"><label class="block text-sm font-medium text-gray-700 mb-1">Short description (EN)</label><input type="text" id="vid-desc-en" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Long description (EN)</label><textarea id="vid-long-desc-en" rows="3" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></textarea></div>
+                </div>
+                <div id="vid-lang-it" class="vid-lang-content hidden">
+                    <div class="mb-3"><label class="block text-sm font-medium text-gray-700 mb-1">Descrizione breve (IT)</label><input type="text" id="vid-desc-it" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Descrizione lunga (IT)</label><textarea id="vid-long-desc-it" rows="3" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></textarea></div>
+                </div>
+                <div id="vid-lang-de" class="vid-lang-content hidden">
+                    <div class="mb-3"><label class="block text-sm font-medium text-gray-700 mb-1">Kurzbeschreibung (DE)</label><input type="text" id="vid-desc-de" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Langbeschreibung (DE)</label><textarea id="vid-long-desc-de" rows="3" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"></textarea></div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeVideoModal()" class="px-6 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-50 transition text-sm">Odustani</button>
+                <button type="submit" id="vid-submit-btn" class="bg-accent-500 text-white px-6 py-2.5 rounded-xl hover:bg-accent-600 transition text-sm font-medium">Spremi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div id="confirm-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="modal-backdrop fixed inset-0" onclick="closeConfirm()"></div>
+    <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl relative z-10 p-6 text-center">
+        <svg class="w-12 h-12 mx-auto text-red-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Potvrdi brisanje</h3>
+        <p class="text-gray-500 text-sm mb-6" id="confirm-text">Jeste li sigurni?</p>
+        <div class="flex justify-center gap-3">
+            <button onclick="closeConfirm()" class="px-6 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-50 transition text-sm">Odustani</button>
+            <button id="confirm-btn" class="bg-red-500 text-white px-6 py-2.5 rounded-xl hover:bg-red-600 transition text-sm font-medium">Obriši</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 right-6 z-[100] hidden">
+    <div class="bg-gray-800 text-white px-6 py-3 rounded-xl shadow-lg text-sm" id="toast-msg"></div>
+</div>
+
+<script>
+// --- State ---
+let allImages = [];
+let allVideos = [];
+let allGalleries = [];
+let confirmCallback = null;
+
+// --- Init ---
+document.addEventListener('DOMContentLoaded', checkAuth);
+
+async function checkAuth() {
+    try {
+        const res = await fetch('/api/cms/me');
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('cms-layout').classList.remove('hidden');
+        document.getElementById('user-email').textContent = data.email;
+        loadDashboard();
+    } catch {
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('cms-layout').classList.add('hidden');
+    }
+}
+
+// --- Auth ---
+async function doLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    const errEl = document.getElementById('login-error');
+    btn.textContent = 'Prijava...';
+    btn.disabled = true;
+    errEl.classList.add('hidden');
+
+    try {
+        const res = await fetch('/api/cms/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: document.getElementById('login-email').value,
+                password: document.getElementById('login-password').value
+            })
+        });
+        if (!res.ok) throw new Error('Pogrešan email ili lozinka');
+        await checkAuth();
+    } catch (err) {
+        errEl.textContent = err.message;
+        errEl.classList.remove('hidden');
+    } finally {
+        btn.textContent = 'Prijava';
+        btn.disabled = false;
+    }
+}
+
+async function doLogout() {
+    await fetch('/api/cms/logout', { method: 'POST' });
+    location.reload();
+}
+
+// --- Navigation ---
+function showSection(name, el) {
+    ['dashboard', 'images', 'videos'].forEach(s => {
+        document.getElementById('section-' + s).classList.toggle('hidden', s !== name);
+    });
+    document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'));
+    if (el) el.classList.add('active');
+    else document.querySelector(`.nav-link[onclick*="'${name}'"]`)?.classList.add('active');
+
+    if (name === 'images') loadImages();
+    if (name === 'videos') loadVideos();
+    if (name === 'dashboard') loadDashboard();
+}
+
+// --- Dashboard ---
+async function loadDashboard() {
+    const [imgs, vids, gals] = await Promise.all([
+        fetch('/api/cms/images').then(r => r.json()),
+        fetch('/api/cms/videos').then(r => r.json()),
+        fetch('/api/cms/galleries').then(r => r.json())
+    ]);
+    document.getElementById('stat-images').textContent = imgs.length;
+    document.getElementById('stat-videos').textContent = vids.length;
+    document.getElementById('stat-galleries').textContent = gals.length;
+    allGalleries = gals;
+    updateGalleryDropdowns();
+}
+
+// --- Gallery helpers ---
+function updateGalleryDropdowns() {
+    ['filter-gallery-images', 'filter-gallery-videos'].forEach(id => {
+        const sel = document.getElementById(id);
+        const val = sel.value || 'main';
+        sel.innerHTML = '';
+        const galleries = allGalleries.length > 0 ? allGalleries : ['main'];
+        galleries.forEach(g => {
+            sel.innerHTML += `<option value="${g}">${g}</option>`;
+        });
+        sel.value = galleries.includes(val) ? val : galleries[0];
+    });
+    // No datalist needed — gallery is always set from the filter dropdown
+}
+
+// --- Images ---
+async function loadImages() {
+    const gallery = document.getElementById('filter-gallery-images').value || 'main';
+    const url = `/api/cms/images?gallery=${gallery}`;
+    allImages = await fetch(url).then(r => r.json());
+    renderImages();
+}
+
+function renderImages() {
+    const grid = document.getElementById('images-grid');
+    const empty = document.getElementById('images-empty');
+    grid.innerHTML = '';
+
+    if (allImages.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+    }
+    empty.classList.add('hidden');
+
+    allImages.forEach(img => {
+        grid.innerHTML += `
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden card-hover transition">
+            <div class="aspect-video bg-gray-100 overflow-hidden">
+                <img src="${img.url}" class="w-full h-full object-cover" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23eee%22 width=%22100%22 height=%22100%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2212%22>No img</text></svg>'">
+            </div>
+            <div class="p-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="bg-primary-100 text-primary-700 text-xs font-medium px-2 py-0.5 rounded-full">${img.gallery_code}</span>
+                    <span class="text-gray-400 text-xs">#${img.order_index}</span>
+                </div>
+                <p class="text-sm text-gray-700 truncate">${img.desc_hr || '<span class=text-gray-300>Bez opisa</span>'}</p>
+                <div class="flex gap-2 mt-3">
+                    <button onclick="editImage(${img.id})" class="flex-1 text-xs bg-gray-100 text-gray-700 py-1.5 rounded-lg hover:bg-gray-200 transition">Uredi</button>
+                    <button onclick="manageLinks(${img.id})" class="flex-1 text-xs bg-primary-50 text-primary-700 py-1.5 rounded-lg hover:bg-primary-100 transition">Linkovi</button>
+                    <button onclick="deleteImage(${img.id})" class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-100 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    });
+}
+
+function openImageModal(item = null) {
+    document.getElementById('image-modal').classList.remove('hidden');
+    document.getElementById('image-form').reset();
+    document.getElementById('img-edit-id').value = '';
+    document.getElementById('img-current-url').value = '';
+    document.getElementById('img-preview').classList.add('hidden');
+    document.getElementById('img-upload-text').classList.remove('hidden');
+    document.getElementById('img-links-section').classList.add('hidden');
+    document.getElementById('add-link-form').classList.add('hidden');
+    document.getElementById('add-link-btn').classList.remove('hidden');
+    switchLangTab('img', 'hr');
+
+    if (item) {
+        document.getElementById('image-modal-title').textContent = 'Uredi sliku';
+        document.getElementById('img-edit-id').value = item.id;
+        document.getElementById('img-current-url').value = item.url;
+        document.getElementById('img-gallery').value = item.gallery_code;
+        document.getElementById('img-order').value = item.order_index;
+        document.getElementById('img-preview-img').src = item.url;
+        document.getElementById('img-preview').classList.remove('hidden');
+        document.getElementById('img-upload-text').classList.add('hidden');
+        ['hr','en','it','de'].forEach(l => {
+            document.getElementById('img-desc-'+l).value = item['desc_'+l] || '';
+            document.getElementById('img-long-desc-'+l).value = item['long_desc_'+l] || '';
+        });
+        document.getElementById('img-links-section').classList.remove('hidden');
+        loadLinksForImage(item.id);
+    } else {
+        document.getElementById('image-modal-title').textContent = 'Nova slika';
+        document.getElementById('img-gallery').value = document.getElementById('filter-gallery-images').value || 'main';
+    }
+}
+
+function closeImageModal() {
+    document.getElementById('image-modal').classList.add('hidden');
+}
+
+async function saveImage(e) {
+    e.preventDefault();
+    const btn = document.getElementById('img-submit-btn');
+    btn.textContent = 'Spremanje...';
+    btn.disabled = true;
+
+    try {
+        const editId = document.getElementById('img-edit-id').value;
+        if (editId) {
+            // Check if new file was selected
+            const fileInput = document.getElementById('img-file');
+            let imageUrl = document.getElementById('img-current-url').value;
+            if (fileInput.files.length > 0) {
+                const fd = new FormData();
+                fd.append('file', fileInput.files[0]);
+                const uploadRes = await fetch('/api/cms/upload', { method: 'POST', body: fd });
+                if (!uploadRes.ok) throw new Error('Upload failed');
+                const uploadData = await uploadRes.json();
+                imageUrl = uploadData.url;
+            }
+
+            const body = {
+                gallery_code: document.getElementById('img-gallery').value,
+                image_url: imageUrl,
+                order_index: parseInt(document.getElementById('img-order').value) || 0,
+            };
+            ['hr','en','it','de'].forEach(l => {
+                body['desc_'+l] = document.getElementById('img-desc-'+l).value;
+                body['long_desc_'+l] = document.getElementById('img-long-desc-'+l).value;
+            });
+
+            const res = await fetch(`/api/cms/image?id=${editId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error('Update failed');
+            toast('Slika ažurirana');
+        } else {
+            const fileInput = document.getElementById('img-file');
+            if (!fileInput.files.length) { alert('Odaberite sliku!'); return; }
+
+            const fd = new FormData();
+            fd.append('file', fileInput.files[0]);
+            fd.append('gallery_code', document.getElementById('img-gallery').value);
+            fd.append('order_index', document.getElementById('img-order').value);
+            ['hr','en','it','de'].forEach(l => {
+                fd.append('desc_'+l, document.getElementById('img-desc-'+l).value);
+                fd.append('long_desc_'+l, document.getElementById('img-long-desc-'+l).value);
+            });
+
+            const res = await fetch('/api/cms/images', { method: 'POST', body: fd });
+            if (!res.ok) throw new Error('Create failed');
+            toast('Slika dodana');
+        }
+        closeImageModal();
+        loadImages();
+        loadDashboard();
+    } catch (err) {
+        alert('Greška: ' + err.message);
+    } finally {
+        btn.textContent = 'Spremi';
+        btn.disabled = false;
+    }
+}
+
+function editImage(id) {
+    const img = allImages.find(i => i.id === id);
+    if (img) openImageModal(img);
+}
+
+function deleteImage(id) {
+    openConfirm('Jeste li sigurni da želite obrisati ovu sliku?', async () => {
+        await fetch(`/api/cms/image?id=${id}`, { method: 'DELETE' });
+        toast('Slika obrisana');
+        loadImages();
+        loadDashboard();
+    });
+}
+
+// --- Videos ---
+async function loadVideos() {
+    const gallery = document.getElementById('filter-gallery-videos').value || 'main';
+    const url = `/api/cms/videos?gallery=${gallery}`;
+    allVideos = await fetch(url).then(r => r.json());
+    renderVideos();
+}
+
+function renderVideos() {
+    const grid = document.getElementById('videos-grid');
+    const empty = document.getElementById('videos-empty');
+    grid.innerHTML = '';
+
+    if (allVideos.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+    }
+    empty.classList.add('hidden');
+
+    allVideos.forEach(vid => {
+        const thumb = vid.thumbnail_url || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 60%22><rect fill=%22%23222%22 width=%22100%22 height=%2260%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23666%22 font-size=%2210%22>Video</text></svg>';
+        grid.innerHTML += `
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden card-hover transition">
+            <div class="aspect-video bg-gray-900 overflow-hidden relative">
+                <img src="${thumb}" class="w-full h-full object-cover opacity-80" loading="lazy">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">${vid.gallery_code}</span>
+                    <span class="text-gray-400 text-xs">#${vid.order_index}</span>
+                </div>
+                <p class="text-sm text-gray-700 truncate">${vid.desc_hr || '<span class=text-gray-300>Bez opisa</span>'}</p>
+                <div class="flex gap-2 mt-3">
+                    <button onclick="editVideo(${vid.id})" class="flex-1 text-xs bg-gray-100 text-gray-700 py-1.5 rounded-lg hover:bg-gray-200 transition">Uredi</button>
+                    <button onclick="deleteVideo(${vid.id})" class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-100 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    });
+}
+
+function openVideoModal(item = null) {
+    document.getElementById('video-modal').classList.remove('hidden');
+    document.getElementById('video-form').reset();
+    document.getElementById('vid-edit-id').value = '';
+    document.getElementById('vid-thumb-preview').classList.add('hidden');
+    document.getElementById('vid-file-label').textContent = 'Klikni za upload video datoteke (opcionalno)';
+    document.getElementById('vid-thumb-label').textContent = 'Klikni za upload thumbnaila (opcionalno)';
+    switchLangTab('vid', 'hr');
+
+    if (item) {
+        document.getElementById('video-modal-title').textContent = 'Uredi video';
+        document.getElementById('vid-edit-id').value = item.id;
+        document.getElementById('vid-url').value = item.url || '';
+        document.getElementById('vid-thumb-url').value = item.thumbnail_url || '';
+        document.getElementById('vid-gallery').value = item.gallery_code;
+        document.getElementById('vid-order').value = item.order_index;
+        if (item.thumbnail_url) {
+            document.getElementById('vid-thumb-preview-img').src = item.thumbnail_url;
+            document.getElementById('vid-thumb-preview').classList.remove('hidden');
+        }
+        ['hr','en','it','de'].forEach(l => {
+            document.getElementById('vid-desc-'+l).value = item['desc_'+l] || '';
+            document.getElementById('vid-long-desc-'+l).value = item['long_desc_'+l] || '';
+        });
+    } else {
+        document.getElementById('video-modal-title').textContent = 'Novi video';
+        document.getElementById('vid-gallery').value = document.getElementById('filter-gallery-videos').value || 'main';
+    }
+}
+
+function closeVideoModal() {
+    document.getElementById('video-modal').classList.add('hidden');
+}
+
+async function saveVideo(e) {
+    e.preventDefault();
+    const btn = document.getElementById('vid-submit-btn');
+    btn.textContent = 'Spremanje...';
+    btn.disabled = true;
+
+    try {
+        const editId = document.getElementById('vid-edit-id').value;
+        if (editId) {
+            // Upload new thumbnail if selected
+            let thumbUrl = document.getElementById('vid-thumb-url').value;
+            const thumbFile = document.getElementById('vid-thumb-file');
+            if (thumbFile.files.length > 0) {
+                const fd = new FormData();
+                fd.append('file', thumbFile.files[0]);
+                const uploadRes = await fetch('/api/cms/upload', { method: 'POST', body: fd });
+                if (uploadRes.ok) {
+                    const data = await uploadRes.json();
+                    thumbUrl = data.url;
+                }
+            }
+
+            const body = {
+                gallery_code: document.getElementById('vid-gallery').value,
+                video_url: document.getElementById('vid-url').value,
+                thumbnail_url: thumbUrl,
+                order_index: parseInt(document.getElementById('vid-order').value) || 0,
+            };
+            ['hr','en','it','de'].forEach(l => {
+                body['desc_'+l] = document.getElementById('vid-desc-'+l).value;
+                body['long_desc_'+l] = document.getElementById('vid-long-desc-'+l).value;
+            });
+
+            const res = await fetch(`/api/cms/video?id=${editId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error('Update failed');
+            toast('Video ažuriran');
+        } else {
+            const fd = new FormData();
+            const vidFile = document.getElementById('vid-file');
+            const thumbFile = document.getElementById('vid-thumb-file');
+            if (vidFile.files.length > 0) fd.append('file', vidFile.files[0]);
+            if (thumbFile.files.length > 0) fd.append('thumbnail', thumbFile.files[0]);
+            fd.append('video_url', document.getElementById('vid-url').value);
+            fd.append('thumbnail_url', document.getElementById('vid-thumb-url').value);
+            fd.append('gallery_code', document.getElementById('vid-gallery').value);
+            fd.append('order_index', document.getElementById('vid-order').value);
+            ['hr','en','it','de'].forEach(l => {
+                fd.append('desc_'+l, document.getElementById('vid-desc-'+l).value);
+                fd.append('long_desc_'+l, document.getElementById('vid-long-desc-'+l).value);
+            });
+
+            const res = await fetch('/api/cms/videos', { method: 'POST', body: fd });
+            if (!res.ok) throw new Error('Create failed');
+            toast('Video dodan');
+        }
+        closeVideoModal();
+        loadVideos();
+        loadDashboard();
+    } catch (err) {
+        alert('Greška: ' + err.message);
+    } finally {
+        btn.textContent = 'Spremi';
+        btn.disabled = false;
+    }
+}
+
+function editVideo(id) {
+    const vid = allVideos.find(v => v.id === id);
+    if (vid) openVideoModal(vid);
+}
+
+function deleteVideo(id) {
+    openConfirm('Jeste li sigurni da želite obrisati ovaj video?', async () => {
+        await fetch(`/api/cms/video?id=${id}`, { method: 'DELETE' });
+        toast('Video obrisan');
+        loadVideos();
+        loadDashboard();
+    });
+}
+
+// --- Links ---
+async function loadLinksForImage(imageId) {
+    const links = await fetch(`/api/cms/links?image_id=${imageId}`).then(r => r.json());
+    const list = document.getElementById('img-links-list');
+    list.innerHTML = '';
+    if (links.length === 0) {
+        list.innerHTML = '<p class="text-gray-400 text-xs">Nema linkova.</p>';
+    } else {
+        links.forEach(link => {
+            list.innerHTML += `
+            <div class="flex items-center justify-between bg-white rounded-lg p-2.5 text-sm">
+                <div>
+                    <span class="font-medium text-gray-700">${link.name_hr || link.target_gallery_code}</span>
+                    <span class="text-gray-400 text-xs ml-2">&rarr; ${link.target_gallery_code}</span>
+                </div>
+                <button onclick="deleteLink(${link.id}, ${imageId})" class="text-red-400 hover:text-red-600 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>`;
+        });
+    }
+}
+
+function manageLinks(imageId) {
+    const img = allImages.find(i => i.id === imageId);
+    if (img) {
+        openImageModal(img);
+        // Scroll to links section
+        setTimeout(() => {
+            document.getElementById('img-links-section').scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    }
+}
+
+async function saveLink() {
+    const imageId = document.getElementById('img-edit-id').value;
+    if (!imageId) return;
+
+    const body = {
+        source_slika_id: parseInt(imageId),
+        target_gallery_code: document.getElementById('link-target').value,
+        name_hr: document.getElementById('link-name-hr').value,
+        name_en: document.getElementById('link-name-en').value,
+        name_it: document.getElementById('link-name-it').value,
+        name_de: document.getElementById('link-name-de').value,
+    };
+
+    if (!body.target_gallery_code) { alert('Unesite ciljnu galeriju'); return; }
+
+    const res = await fetch('/api/cms/links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    if (res.ok) {
+        toast('Link dodan');
+        loadLinksForImage(parseInt(imageId));
+        document.getElementById('add-link-form').classList.add('hidden');
+        document.getElementById('add-link-btn').classList.remove('hidden');
+        ['link-target','link-name-hr','link-name-en','link-name-it','link-name-de'].forEach(id => document.getElementById(id).value = '');
+    }
+}
+
+async function deleteLink(linkId, imageId) {
+    await fetch(`/api/cms/links?id=${linkId}`, { method: 'DELETE' });
+    toast('Link obrisan');
+    loadLinksForImage(imageId);
+}
+
+// --- UI Helpers ---
+function switchLangTab(prefix, lang) {
+    document.querySelectorAll(`.${prefix}-lang-tab`).forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.lang === lang);
+        tab.classList.toggle('text-gray-500', tab.dataset.lang !== lang);
+    });
+    document.querySelectorAll(`.${prefix}-lang-content`).forEach(content => {
+        content.classList.toggle('hidden', content.id !== `${prefix}-lang-${lang}`);
+    });
+}
+
+function previewFile(input, prefix) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const previewEl = document.getElementById(prefix + '-preview');
+            const imgEl = document.getElementById(prefix + '-preview-img');
+            if (previewEl && imgEl) {
+                imgEl.src = e.target.result;
+                previewEl.classList.remove('hidden');
+            }
+            const textEl = document.getElementById(prefix + '-upload-text');
+            if (textEl) textEl.classList.add('hidden');
+            const labelEl = document.getElementById(prefix + '-label');
+            if (labelEl) labelEl.textContent = 'Odabrano: ' + input.files[0].name;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function openConfirm(text, callback) {
+    document.getElementById('confirm-text').textContent = text;
+    document.getElementById('confirm-modal').classList.remove('hidden');
+    confirmCallback = callback;
+    document.getElementById('confirm-btn').onclick = async () => {
+        if (confirmCallback) await confirmCallback();
+        closeConfirm();
+    };
+}
+
+function closeConfirm() {
+    document.getElementById('confirm-modal').classList.add('hidden');
+    confirmCallback = null;
+}
+
+function toast(msg) {
+    const el = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 3000);
+}
+</script>
+</body>
+</html>

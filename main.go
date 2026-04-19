@@ -75,8 +75,13 @@ func main() {
 		}
 	}
 
+	// Ensure CMS tables exist and seed admin user
+	ensureCMSTables()
+	seedAdminUser()
+
 	http.HandleFunc("/api/images", handleGetImages) // Keeping name for compatibility
 	http.HandleFunc("/api/upload", handleUpload)    // Sample upload endpoint
+	registerCMSRoutes()
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 
 	port := os.Getenv("PORT")
@@ -136,7 +141,8 @@ func handleGetImages(w http.ResponseWriter, r *http.Request) {
 	// 2. Fetch videos
 	vidRows, err := db.Query(`
 		SELECT id, gallery_code, video_url, thumbnail_url, order_index,
-		       desc_hr, desc_en, desc_it, desc_de
+		       desc_hr, desc_en, desc_it, desc_de,
+		       COALESCE(long_desc_hr,''), COALESCE(long_desc_en,''), COALESCE(long_desc_it,''), COALESCE(long_desc_de,'')
 		FROM videa WHERE gallery_code = $1
 		ORDER BY order_index ASC`, gallery)
 
@@ -146,7 +152,8 @@ func handleGetImages(w http.ResponseWriter, r *http.Request) {
 			var item MediaItem
 			item.Type = "video"
 			vidRows.Scan(&item.ID, &item.GalleryCode, &item.URL, &item.ThumbnailURL, &item.OrderIndex,
-				&item.DescHR, &item.DescEN, &item.DescIT, &item.DescDE)
+				&item.DescHR, &item.DescEN, &item.DescIT, &item.DescDE,
+				&item.LongDescHR, &item.LongDescEN, &item.LongDescIT, &item.LongDescDE)
 
 			item.Links = []Link{} // Videos don't have links in this schema yet
 			items = append(items, item)

@@ -26,5 +26,21 @@ CREATE TABLE videa (
     video_url TEXT NOT NULL,
     thumbnail_url TEXT,
     order_index INT NOT NULL,
-    desc_hr TEXT, desc_en TEXT, desc_it TEXT, desc_de TEXT
+    desc_hr TEXT, desc_en TEXT, desc_it TEXT, desc_de TEXT,
+    long_desc_hr TEXT, long_desc_en TEXT, long_desc_it TEXT, long_desc_de TEXT
+);
+
+CREATE TABLE cms_users (
+    id SERIAL PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE cms_sessions (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES cms_users(id) ON DELETE CASCADE,
+    token TEXT UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
 );

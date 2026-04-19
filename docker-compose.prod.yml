@@ -25,6 +25,8 @@ services:
       DB_NAME: ${DB_NAME}
       PORT: 8080
       CLOUDINARY_URL: ${CLOUDINARY_URL}
+      CMS_ADMIN_EMAIL: ${CMS_ADMIN_EMAIL}
+      CMS_ADMIN_PASSWORD: ${CMS_ADMIN_PASSWORD}
     depends_on:
       - db
 

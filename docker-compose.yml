@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: magriz_user
+      POSTGRES_PASSWORD: magriz_password
+      POSTGRES_DB: magriz_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: magriz_user
+      DB_PASSWORD: magriz_password
+      DB_NAME: magriz_db
+      PORT: 8080
+      CLOUDINARY_URL: "cloudinary://295818924525877:x-mT_tCMhhnz9ihsiJQcD4JMZSQ@dlj0r89fn"
+      CMS_ADMIN_EMAIL: "admin@magriz.hr"
+      CMS_ADMIN_PASSWORD: "admin123"
+    depends_on:
+      - db
+    volumes:
+      - ./static:/root/static
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8081:8080"
+
+volumes:
+  postgres_data:
