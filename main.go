@@ -2,6 +2,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -72,6 +73,14 @@ func main() {
 		cld, err = cloudinary.NewFromURL(cldURL)
 		if err != nil {
 			log.Printf("Warning: Cloudinary initialization failed: %v", err)
+		} else {
+			// Skip SSL verification for development (Docker container issue)
+			cld.Upload.Client = http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				},
+			}
+			log.Println("Cloudinary initialized (SSL verification disabled for dev)")
 		}
 	}
 

@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muzej Magriž - Objave</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 500:'#995EA1', 600:'#874e8e', 700:'#713f75' },
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        .lang-tab.active { border-bottom: 3px solid #995EA1; color: #995EA1; font-weight: 600; }
+        .modal-backdrop { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+        body { font-size: 16px; }
+        .big-button { font-size: 18px; padding: 16px 24px; }
+        .feed-card { transition: all 0.2s; }
+        .feed-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- Login -->
+<div id="login-screen" class="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary-500 to-primary-700">
+    <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Muzej Magriž</h1>
+            <p class="text-gray-500 mt-2">Prijava</p>
+        </div>
+        <form id="login-form" onsubmit="doLogin(event)">
+            <div class="mb-5">
+                <label class="block text-base font-medium text-gray-700 mb-2">Email</label>
+                <input type="email" id="login-email" required class="w-full px-4 py-4 text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+            </div>
+            <div class="mb-6">
+                <label class="block text-base font-medium text-gray-700 mb-2">Lozinka</label>
+                <input type="password" id="login-password" required class="w-full px-4 py-4 text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+            </div>
+            <button type="submit" id="login-btn" class="w-full bg-primary-500 text-white py-4 text-lg rounded-xl hover:bg-primary-600 transition font-semibold">Prijavi se</button>
+            <p id="login-error" class="text-red-500 text-base mt-4 text-center hidden"></p>
+        </form>
+    </div>
+</div>
+
+<!-- Main App -->
+<div id="app" class="hidden">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Muzej Magriž</h1>
+                <p class="text-sm text-gray-500">Objave</p>
+            </div>
+            <button onclick="doLogout()" class="px-5 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium transition">Odjava</button>
+        </div>
+    </header>
+
+    <!-- Feed View -->
+    <div id="feed-view" class="max-w-4xl mx-auto px-6 py-8">
+        <!-- Breadcrumb -->
+        <div id="breadcrumb" class="mb-6 flex items-center gap-2 text-lg flex-wrap">
+            <a href="javascript:void(0)" onclick="goToGallery('main')" class="text-primary-500 hover:text-primary-700 font-medium">Početna</a>
+            <span id="breadcrumb-arrow" class="text-gray-400 hidden">→</span>
+            <span id="breadcrumb-current" class="text-gray-700 font-semibold hidden"></span>
+        </div>
+
+        <!-- Add New Button -->
+        <button onclick="openAddModal()" class="big-button w-full bg-primary-500 text-white rounded-2xl hover:bg-primary-600 transition font-semibold shadow-lg mb-8 flex items-center justify-center gap-3">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Dodaj novu sliku
+        </button>
+
+        <!-- Feed List -->
+        <div id="feed" class="space-y-6"></div>
+        <div id="feed-empty" class="hidden text-center py-20">
+            <svg class="w-20 h-20 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <p class="text-gray-400 text-lg">Nema objava. Dodajte prvu sliku!</p>
+        </div>
+    </div>
+
+    <!-- Detail View -->
+    <div id="detail-view" class="hidden max-w-4xl mx-auto px-6 py-8">
+        <!-- Breadcrumb -->
+        <div class="mb-6 flex items-center gap-2 text-lg flex-wrap">
+            <a href="javascript:void(0)" onclick="goToGallery('main')" class="text-primary-500 hover:text-primary-700 font-medium">Početna</a>
+            <span class="text-gray-400">→</span>
+            <span id="detail-breadcrumb-gallery" class="text-gray-500 cursor-pointer hover:text-gray-700 hidden"></span>
+            <span id="detail-breadcrumb-arrow" class="text-gray-400 hidden">→</span>
+            <span id="detail-breadcrumb-title" class="text-gray-700 font-semibold"></span>
+        </div>
+
+        <!-- Image -->
+        <div class="bg-white rounded-3xl shadow-lg overflow-hidden mb-6">
+            <img id="detail-page-img" class="w-full max-h-[600px] object-contain bg-gray-100">
+        </div>
+
+        <!-- Short Description -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+            <p id="detail-page-desc" class="text-xl text-gray-800"></p>
+        </div>
+
+        <!-- Long Description Section -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Dugi opis</h3>
+            <div class="flex border-b border-gray-200 mb-4 flex-wrap">
+                <button type="button" onclick="switchDetailLang('hr')" class="lang-tab active px-4 py-2 text-sm" data-lang="hr">Hrvatski</button>
+                <button type="button" onclick="switchDetailLang('en')" class="lang-tab px-4 py-2 text-sm text-gray-500" data-lang="en">English</button>
+                <button type="button" onclick="switchDetailLang('it')" class="lang-tab px-4 py-2 text-sm text-gray-500" data-lang="it">Italiano</button>
+                <button type="button" onclick="switchDetailLang('de')" class="lang-tab px-4 py-2 text-sm text-gray-500" data-lang="de">Deutsch</button>
+            </div>
+            <div id="detail-page-lang-hr" class="detail-lang-content">
+                <textarea id="detail-page-long-desc-hr" rows="5" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-base" placeholder="Možete koristiti HTML tagove: <b>bold</b>, <i>italic</i>, <p>paragraf</p>"></textarea>
+            </div>
+            <div id="detail-page-lang-en" class="detail-lang-content hidden">
+                <textarea id="detail-page-long-desc-en" rows="5" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-base"></textarea>
+            </div>
+            <div id="detail-page-lang-it" class="detail-lang-content hidden">
+                <textarea id="detail-page-long-desc-it" rows="5" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-base"></textarea>
+            </div>
+            <div id="detail-page-lang-de" class="detail-lang-content hidden">
+                <textarea id="detail-page-long-desc-de" rows="5" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-base"></textarea>
+            </div>
+            <button onclick="saveLongDesc()" class="mt-4 bg-primary-500 text-white px-6 py-3 rounded-xl hover:bg-primary-600 transition font-semibold text-base">Spremi dugi opis</button>
+        </div>
+
+        <!-- Links Section (only for main gallery) -->
+        <div id="detail-page-links-section" class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Linkovi na galerije</h3>
+            <div id="detail-page-links-list" class="space-y-3 mb-4"></div>
+            <button onclick="showAddLinkForm()" class="text-primary-500 font-semibold hover:text-primary-700 text-base">+ Dodaj link na galeriju</button>
+            
+            <div id="detail-page-add-link-form" class="hidden mt-4 border-t border-gray-200 pt-4">
+                <input type="text" id="detail-page-link-gallery" placeholder="Naziv galerije (npr. stare_slike)" class="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-xl mb-3 focus:ring-2 focus:ring-primary-500 outline-none">
+                <input type="text" id="detail-page-link-name-hr" placeholder="Naziv linka (HR)" class="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-xl mb-3 focus:ring-2 focus:ring-primary-500 outline-none">
+                <div class="grid grid-cols-3 gap-3 mb-3">
+                    <input type="text" id="detail-page-link-name-en" placeholder="EN" class="px-4 py-3 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none">
+                    <input type="text" id="detail-page-link-name-it" placeholder="IT" class="px-4 py-3 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none">
+                    <input type="text" id="detail-page-link-name-de" placeholder="DE" class="px-4 py-3 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none">
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="saveLinkPage()" class="flex-1 bg-primary-500 text-white px-5 py-3 text-base rounded-xl hover:bg-primary-600 transition font-semibold">Spremi link</button>
+                    <button onclick="hideAddLinkForm()" class="px-5 py-3 text-base border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition">Odustani</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3 flex-wrap">
+            <button onclick="goBack()" class="flex-1 min-w-[120px] bg-gray-100 hover:bg-gray-200 px-6 py-3 rounded-xl transition font-semibold text-base">← Natrag</button>
+            <button onclick="editCurrentItem()" class="flex-1 min-w-[120px] bg-primary-100 hover:bg-primary-200 text-primary-700 px-6 py-3 rounded-xl transition font-semibold text-base">Uredi</button>
+            <button onclick="deleteCurrentItem()" class="px-6 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition font-semibold text-base">Obriši</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="edit-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="modal-backdrop fixed inset-0" onclick="closeEditModal()"></div>
+    <div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl relative z-10 my-8">
+        <div class="p-6 border-b flex justify-between items-center">
+            <h3 id="modal-title" class="text-2xl font-bold text-gray-800">Dodaj sliku</h3>
+            <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
+        </div>
+        <form id="edit-form" onsubmit="saveItem(event)" class="p-6">
+            <input type="hidden" id="edit-id">
+            <input type="hidden" id="edit-url">
+
+            <!-- Upload -->
+            <div id="upload-section" class="mb-6">
+                <div id="upload-zone" class="border-3 border-dashed border-gray-300 rounded-2xl p-10 text-center cursor-pointer hover:border-primary-500 hover:bg-primary-50 transition" onclick="document.getElementById('file-input').click()">
+                    <div id="preview-container" class="hidden mb-4"><img id="preview-img" class="max-h-60 mx-auto rounded-xl shadow-lg"></div>
+                    <div id="upload-text">
+                        <svg class="w-16 h-16 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <p class="text-gray-600 text-lg font-medium">Kliknite za odabir slike</p>
+                        <p class="text-gray-400 text-sm mt-1">ili povucite sliku ovdje</p>
+                    </div>
+                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="previewImage(this)">
+                </div>
+            </div>
+
+            <!-- Language Tabs -->
+            <div class="mb-6">
+                <div class="flex border-b border-gray-200 mb-5 flex-wrap">
+                    <button type="button" onclick="switchLang('hr')" class="lang-tab active px-6 py-3 text-base" data-lang="hr">Hrvatski</button>
+                    <button type="button" onclick="switchLang('en')" class="lang-tab px-6 py-3 text-base text-gray-500" data-lang="en">English</button>
+                    <button type="button" onclick="switchLang('it')" class="lang-tab px-6 py-3 text-base text-gray-500" data-lang="it">Italiano</button>
+                    <button type="button" onclick="switchLang('de')" class="lang-tab px-6 py-3 text-base text-gray-500" data-lang="de">Deutsch</button>
+                </div>
+                <div id="lang-hr" class="lang-content">
+                    <label class="block text-base font-medium text-gray-700 mb-2">Kratki opis (HR)</label>
+                    <input type="text" id="desc-hr" class="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="Npr. Stara luka u Martinšćici">
+                </div>
+                <div id="lang-en" class="lang-content hidden">
+                    <label class="block text-base font-medium text-gray-700 mb-2">Short description (EN)</label>
+                    <input type="text" id="desc-en" class="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="E.g. Old harbor in Martinšćica">
+                </div>
+                <div id="lang-it" class="lang-content hidden">
+                    <label class="block text-base font-medium text-gray-700 mb-2">Descrizione breve (IT)</label>
+                    <input type="text" id="desc-it" class="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                </div>
+                <div id="lang-de" class="lang-content hidden">
+                    <label class="block text-base font-medium text-gray-700 mb-2">Kurzbeschreibung (DE)</label>
+                    <input type="text" id="desc-de" class="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                </div>
+            </div>
+
+            <div class="flex gap-4">
+                <button type="button" onclick="closeEditModal()" class="flex-1 px-6 py-4 text-lg border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition font-medium">Odustani</button>
+                <button type="submit" id="save-btn" class="flex-1 bg-primary-500 text-white px-6 py-4 text-lg rounded-xl hover:bg-primary-600 transition font-semibold">Spremi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 right-6 z-[100] hidden">
+    <div class="bg-gray-800 text-white px-6 py-4 rounded-xl shadow-lg text-base" id="toast-msg"></div>
+</div>
+
+<!-- Confirm -->
+<div id="confirm-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center">
+    <div class="modal-backdrop fixed inset-0" onclick="closeConfirm()"></div>
+    <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl relative z-10 p-8 text-center mx-4">
+        <svg class="w-16 h-16 mx-auto text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        <h3 class="text-xl font-bold text-gray-800 mb-3">Jeste li sigurni?</h3>
+        <p class="text-gray-500 mb-6" id="confirm-text">Ova akcija se ne može poništiti.</p>
+        <div class="flex gap-3">
+            <button onclick="closeConfirm()" class="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition font-medium">Odustani</button>
+            <button id="confirm-btn" class="flex-1 bg-red-500 text-white px-6 py-3 rounded-xl hover:bg-red-600 transition font-semibold">Obriši</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let allItems = [];
+let currentItem = null;
+let confirmCallback = null;
+let currentGallery = 'main';
+
+// Auth
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+});
+
+async function checkAuth() {
+    try {
+        const res = await fetch('/api/cms/me');
+        if (!res.ok) throw new Error();
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        loadFeed();
+    } catch {
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('app').classList.add('hidden');
+    }
+}
+
+async function doLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    const errEl = document.getElementById('login-error');
+    btn.textContent = 'Prijava...';
+    btn.disabled = true;
+    errEl.classList.add('hidden');
+
+    try {
+        const res = await fetch('/api/cms/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: document.getElementById('login-email').value,
+                password: document.getElementById('login-password').value
+            })
+        });
+        if (!res.ok) throw new Error('Pogrešan email ili lozinka');
+        await checkAuth();
+    } catch (err) {
+        errEl.textContent = err.message;
+        errEl.classList.remove('hidden');
+    } finally {
+        btn.textContent = 'Prijavi se';
+        btn.disabled = false;
+    }
+}
+
+async function doLogout() {
+    await fetch('/api/cms/logout', { method: 'POST' });
+    location.reload();
+}
+
+// Feed
+async function loadFeed() {
+    const res = await fetch(`/api/cms/images?gallery=${currentGallery}`);
+    allItems = await res.json();
+    allItems.sort((a, b) => a.order_index - b.order_index);
+    
+    // Update breadcrumb
+    if (currentGallery === 'main') {
+        document.getElementById('breadcrumb-arrow').classList.add('hidden');
+        document.getElementById('breadcrumb-current').classList.add('hidden');
+    } else {
+        document.getElementById('breadcrumb-arrow').classList.remove('hidden');
+        document.getElementById('breadcrumb-current').classList.remove('hidden');
+        document.getElementById('breadcrumb-current').textContent = currentGallery;
+    }
+    
+    renderFeed();
+}
+
+function renderFeed() {
+    const feed = document.getElementById('feed');
+    const empty = document.getElementById('feed-empty');
+    
+    if (allItems.length === 0) {
+        feed.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+    }
+    
+    empty.classList.add('hidden');
+    
+    // Large feed view for main gallery
+    if (currentGallery === 'main') {
+        feed.innerHTML = allItems.map(item => `
+            <div class="feed-card bg-white rounded-2xl shadow-sm overflow-hidden relative group">
+                <div class="cursor-pointer" onclick="showDetailPage(${item.id})">
+                    <img src="${item.url}" class="w-full h-80 object-cover" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 300%22><rect fill=%22%23eee%22 width=%22400%22 height=%22300%22/></svg>'">
+                    <div class="p-6">
+                        <p class="text-lg text-gray-800 font-medium">${item.desc_hr || 'Bez opisa'}</p>
+                        <p class="text-sm text-gray-400 mt-2">#${item.order_index}</p>
+                    </div>
+                </div>
+                <button onclick="event.stopPropagation(); deleteItem(${item.id})" class="absolute top-3 right-3 bg-red-500 text-white p-3 rounded-xl shadow-lg hover:bg-red-600 transition opacity-0 group-hover:opacity-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+            </div>
+        `).join('');
+    } else {
+        // Grid view for other galleries
+        feed.innerHTML = `<div class="grid grid-cols-2 md:grid-cols-3 gap-4">` + allItems.map(item => `
+            <div class="feed-card bg-white rounded-xl shadow-sm overflow-hidden relative group">
+                <div class="cursor-pointer" onclick="showDetailPage(${item.id})">
+                    <img src="${item.url}" class="w-full h-48 object-cover" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 300%22><rect fill=%22%23eee%22 width=%22400%22 height=%22300%22/></svg>'">
+                    <div class="p-3">
+                        <p class="text-sm text-gray-800 font-medium truncate">${item.desc_hr || 'Bez opisa'}</p>
+                        <p class="text-xs text-gray-400 mt-1">#${item.order_index}</p>
+                    </div>
+                </div>
+                <button onclick="event.stopPropagation(); deleteItem(${item.id})" class="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-lg shadow-lg hover:bg-red-600 transition opacity-0 group-hover:opacity-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+            </div>
+        `).join('') + `</div>`;
+    }
+}
+
+function goToGallery(gallery) {
+    currentGallery = gallery;
+    document.getElementById('feed-view').classList.remove('hidden');
+    document.getElementById('detail-view').classList.add('hidden');
+    loadFeed();
+    window.scrollTo(0, 0);
+}
+
+function goBack() {
+    document.getElementById('detail-view').classList.add('hidden');
+    document.getElementById('feed-view').classList.remove('hidden');
+    window.scrollTo(0, 0);
+}
+
+// Detail Page
+function showDetailPage(id) {
+    currentItem = allItems.find(i => i.id === id);
+    if (!currentItem) return;
+
+    document.getElementById('feed-view').classList.add('hidden');
+    document.getElementById('detail-view').classList.remove('hidden');
+    
+    document.getElementById('detail-page-img').src = currentItem.url;
+    document.getElementById('detail-page-desc').textContent = currentItem.desc_hr || 'Bez opisa';
+    document.getElementById('detail-breadcrumb-title').textContent = currentItem.desc_hr || `Slika ${currentItem.id}`;
+    
+    // Update breadcrumb for gallery
+    if (currentGallery !== 'main') {
+        document.getElementById('detail-breadcrumb-gallery').textContent = currentGallery;
+        document.getElementById('detail-breadcrumb-gallery').classList.remove('hidden');
+        document.getElementById('detail-breadcrumb-arrow').classList.remove('hidden');
+        document.getElementById('detail-breadcrumb-gallery').onclick = () => goToGallery(currentGallery);
+    } else {
+        document.getElementById('detail-breadcrumb-gallery').classList.add('hidden');
+        document.getElementById('detail-breadcrumb-arrow').classList.add('hidden');
+    }
+    
+    ['hr','en','it','de'].forEach(l => {
+        document.getElementById(`detail-page-long-desc-${l}`).value = currentItem[`long_desc_${l}`] || '';
+    });
+    
+    switchDetailLang('hr');
+    
+    // Only show links section for main gallery
+    if (currentGallery === 'main') {
+        document.getElementById('detail-page-links-section').classList.remove('hidden');
+        loadLinksPage();
+    } else {
+        document.getElementById('detail-page-links-section').classList.add('hidden');
+    }
+    
+    window.scrollTo(0, 0);
+}
+
+function switchDetailLang(lang) {
+    document.querySelectorAll('#detail-view .lang-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.lang === lang);
+        tab.classList.toggle('text-gray-500', tab.dataset.lang !== lang);
+    });
+    document.querySelectorAll('.detail-lang-content').forEach(content => {
+        content.classList.toggle('hidden', content.id !== `detail-page-lang-${lang}`);
+    });
+}
+
+async function saveLongDesc() {
+    if (!currentItem) return;
+
+    const body = {
+        gallery_code: currentItem.gallery_code,
+        image_url: currentItem.url,
+        order_index: currentItem.order_index,
+        desc_hr: currentItem.desc_hr,
+        desc_en: currentItem.desc_en,
+        desc_it: currentItem.desc_it,
+        desc_de: currentItem.desc_de,
+        long_desc_hr: document.getElementById('detail-page-long-desc-hr').value,
+        long_desc_en: document.getElementById('detail-page-long-desc-en').value,
+        long_desc_it: document.getElementById('detail-page-long-desc-it').value,
+        long_desc_de: document.getElementById('detail-page-long-desc-de').value,
+    };
+
+    await fetch(`/api/cms/image?id=${currentItem.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    
+    toast('Dugi opis spremljen');
+    await loadFeed();
+    // Update currentItem
+    currentItem.long_desc_hr = body.long_desc_hr;
+    currentItem.long_desc_en = body.long_desc_en;
+    currentItem.long_desc_it = body.long_desc_it;
+    currentItem.long_desc_de = body.long_desc_de;
+}
+
+function editCurrentItem() {
+    if (!currentItem) return;
+    
+    document.getElementById('edit-modal').classList.remove('hidden');
+    document.getElementById('modal-title').textContent = 'Uredi sliku';
+    document.getElementById('edit-id').value = currentItem.id;
+    document.getElementById('edit-url').value = currentItem.url;
+    document.getElementById('preview-img').src = currentItem.url;
+    document.getElementById('preview-container').classList.remove('hidden');
+    document.getElementById('upload-text').classList.add('hidden');
+    document.getElementById('upload-section').classList.remove('hidden');
+    
+    ['hr','en','it','de'].forEach(l => {
+        document.getElementById(`desc-${l}`).value = currentItem[`desc_${l}`] || '';
+    });
+    
+    switchLang('hr');
+}
+
+function deleteCurrentItem() {
+    if (!currentItem) return;
+    openConfirm('Obrisati ovu sliku?', async () => {
+        await fetch(`/api/cms/image?id=${currentItem.id}`, { method: 'DELETE' });
+        toast('Slika obrisana');
+        goBack();
+        await loadFeed();
+    });
+}
+
+function deleteItem(id) {
+    openConfirm('Obrisati ovu sliku?', async () => {
+        await fetch(`/api/cms/image?id=${id}`, { method: 'DELETE' });
+        toast('Slika obrisana');
+        await loadFeed();
+    });
+}
+
+// Links
+async function loadLinksPage() {
+    if (!currentItem) return;
+    const res = await fetch(`/api/cms/links?image_id=${currentItem.id}`);
+    const links = await res.json();
+    
+    const list = document.getElementById('detail-page-links-list');
+    if (links.length === 0) {
+        list.innerHTML = '<p class="text-gray-400 text-sm">Nema linkova</p>';
+    } else {
+        list.innerHTML = links.map(link => `
+            <div class="flex items-center justify-between bg-white rounded-xl p-4 border-2 border-gray-200">
+                <a href="javascript:void(0)" onclick="navigateToGallery('${link.target_gallery_code}')" class="flex-1 cursor-pointer hover:text-primary-500 transition">
+                    <p class="font-semibold text-gray-800">${link.name_hr || link.target_gallery_code}</p>
+                    <p class="text-sm text-gray-400">→ ${link.target_gallery_code}</p>
+                </a>
+                <button onclick="event.stopPropagation(); deleteLinkPage(${link.id})" class="text-red-400 hover:text-red-600 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        `).join('');
+    }
+}
+
+function showAddLinkForm() {
+    document.getElementById('detail-page-add-link-form').classList.remove('hidden');
+}
+
+function hideAddLinkForm() {
+    document.getElementById('detail-page-add-link-form').classList.add('hidden');
+    ['detail-page-link-gallery','detail-page-link-name-hr','detail-page-link-name-en','detail-page-link-name-it','detail-page-link-name-de'].forEach(id => {
+        document.getElementById(id).value = '';
+    });
+}
+
+async function saveLinkPage() {
+    if (!currentItem) return;
+
+    const gallery = document.getElementById('detail-page-link-gallery').value.trim();
+    if (!gallery) {
+        alert('Unesite naziv galerije');
+        return;
+    }
+
+    const body = {
+        source_slika_id: currentItem.id,
+        target_gallery_code: gallery,
+        name_hr: document.getElementById('detail-page-link-name-hr').value,
+        name_en: document.getElementById('detail-page-link-name-en').value,
+        name_it: document.getElementById('detail-page-link-name-it').value,
+        name_de: document.getElementById('detail-page-link-name-de').value,
+    };
+
+    await fetch('/api/cms/links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    
+    toast('Link dodan');
+    hideAddLinkForm();
+    loadLinksPage();
+}
+
+async function deleteLinkPage(linkId) {
+    await fetch(`/api/cms/links?id=${linkId}`, { method: 'DELETE' });
+    toast('Link obrisan');
+    loadLinksPage();
+}
+
+function navigateToGallery(gallery) {
+    currentGallery = gallery;
+    goToGallery(gallery);
+}
+
+// Add/Edit Modal
+function openAddModal() {
+    document.getElementById('edit-modal').classList.remove('hidden');
+    document.getElementById('modal-title').textContent = 'Dodaj sliku';
+    document.getElementById('edit-form').reset();
+    document.getElementById('edit-id').value = '';
+    document.getElementById('edit-url').value = '';
+    document.getElementById('preview-container').classList.add('hidden');
+    document.getElementById('upload-text').classList.remove('hidden');
+    document.getElementById('upload-section').classList.remove('hidden');
+    switchLang('hr');
+}
+
+function closeEditModal() {
+    document.getElementById('edit-modal').classList.add('hidden');
+}
+
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('preview-img').src = e.target.result;
+            document.getElementById('preview-container').classList.remove('hidden');
+            document.getElementById('upload-text').classList.add('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function switchLang(lang) {
+    document.querySelectorAll('#edit-modal .lang-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.lang === lang);
+        tab.classList.toggle('text-gray-500', tab.dataset.lang !== lang);
+    });
+    document.querySelectorAll('#edit-modal .lang-content').forEach(content => {
+        content.classList.toggle('hidden', content.id !== `lang-${lang}`);
+    });
+}
+
+async function saveItem(e) {
+    e.preventDefault();
+    const btn = document.getElementById('save-btn');
+    btn.textContent = 'Spremanje...';
+    btn.disabled = true;
+
+    try {
+        const editId = document.getElementById('edit-id').value;
+        const fileInput = document.getElementById('file-input');
+        
+        if (editId) {
+            // Update
+            let imageUrl = document.getElementById('edit-url').value;
+            if (fileInput.files.length > 0) {
+                const fd = new FormData();
+                fd.append('file', fileInput.files[0]);
+                const uploadRes = await fetch('/api/cms/upload', { method: 'POST', body: fd });
+                if (!uploadRes.ok) throw new Error('Upload failed');
+                const uploadData = await uploadRes.json();
+                imageUrl = uploadData.url;
+            }
+
+            const item = allItems.find(i => i.id == editId);
+            const body = {
+                gallery_code: currentGallery,
+                image_url: imageUrl,
+                order_index: item ? item.order_index : 0,
+                desc_hr: document.getElementById('desc-hr').value,
+                desc_en: document.getElementById('desc-en').value,
+                desc_it: document.getElementById('desc-it').value,
+                desc_de: document.getElementById('desc-de').value,
+                long_desc_hr: item ? item.long_desc_hr : '',
+                long_desc_en: item ? item.long_desc_en : '',
+                long_desc_it: item ? item.long_desc_it : '',
+                long_desc_de: item ? item.long_desc_de : '',
+            };
+
+            const res = await fetch(`/api/cms/image?id=${editId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error('Update failed');
+            toast('Slika ažurirana');
+        } else {
+            // Create
+            if (!fileInput.files.length) {
+                alert('Odaberite sliku!');
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('file', fileInput.files[0]);
+            fd.append('gallery_code', currentGallery);
+            fd.append('order_index', allItems.length);
+            fd.append('desc_hr', document.getElementById('desc-hr').value);
+            fd.append('desc_en', document.getElementById('desc-en').value);
+            fd.append('desc-it', document.getElementById('desc-it').value);
+            fd.append('desc_de', document.getElementById('desc-de').value);
+            fd.append('long_desc_hr', '');
+            fd.append('long_desc_en', '');
+            fd.append('long_desc_it', '');
+            fd.append('long_desc_de', '');
+
+            const res = await fetch('/api/cms/images', { method: 'POST', body: fd });
+            if (!res.ok) {
+                const errorText = await res.text();
+                console.error('Create failed:', errorText);
+                throw new Error('Failed to create image');
+            }
+            toast('Slika dodana');
+        }
+        
+        closeEditModal();
+        await loadFeed();
+    } catch (err) {
+        console.error('Save error:', err);
+        alert('Greška: ' + err.message);
+    } finally {
+        btn.textContent = 'Spremi';
+        btn.disabled = false;
+    }
+}
+
+// Helpers
+function toast(msg) {
+    const el = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 3000);
+}
+
+function openConfirm(text, callback) {
+    document.getElementById('confirm-text').textContent = text;
+    document.getElementById('confirm-modal').classList.remove('hidden');
+    confirmCallback = callback;
+    document.getElementById('confirm-btn').onclick = async () => {
+        if (confirmCallback) await confirmCallback();
+        closeConfirm();
+    };
+}
+
+function closeConfirm() {
+    document.getElementById('confirm-modal').classList.add('hidden');
+    confirmCallback = null;
+}
+</script>
+</body>
+</html>
